@@ -1,2 +1,40 @@
-real r1;
-r1 = 1.3e-28;
+int i, n, x;
+int number;
+real a, r1, r2;
+r1 = -8.3;
+r2 = 0.34e+2;
+boolean b1;
+number = 2;
+input(n);
+for i = 1 to n do 
+	input(x); 
+
+	if x > 0 then
+	    a = (x - 10) / 2;
+	    b1 = true; 
+	fi
+
+	if x >= 0 then
+	    a = x + 10; 
+	fi
+
+	if x < 0 then
+	    a = x // 5; 
+	fi
+
+	if x <= 0 then
+	    a = x * 2; 
+	fi
+	
+	b1 = x == number;
+
+	if x != number then
+	    a = a + r2;
+	    b1 = false;
+	fi
+
+	print(i,x) 
+	number = number ** i;
+	r1 = r1 + r2;
+end
+print(number, r1);

@@ -40,7 +40,7 @@ stf={(0, 'ws'):0,
 
 initState = 0   # q0 - стартовий стан
 F={2, 6, 10, 11, 12.1, 12.2, 13, 14, 15, 101, 18, 20, 21}
-Fstar={2, 6, 10, 11, 12.2, 15, 21}   # зірочка
+Fstar={2, 6, 10, 11, 12.2, 18, 21}   # зірочка
 Ferror={101}# обробка помилок
 
 
@@ -69,10 +69,9 @@ def lex():
 	global state,numLine,char,lexeme,numChar,FSuccess
 	try:
 		while numChar<lenCode:
-			char=nextChar()			
+			char=nextChar()		
 			classCh=classOfChar(char, state)		 
 			state=nextState(state,classCh)
-			#print(state, classCh, char)
 			if (is_final(state)): 			
 				processing()				
 				# if state in Ferror:	    
@@ -80,6 +79,10 @@ def lex():
 			elif state==initState:lexeme=''
 			else: lexeme+=char		
 		print('Lexer: Лексичний аналіз завершено успішно')
+	except KeyError as e:
+		FSuccess = (False,'Lexer')
+		print('Lexer: у рядку', numLine,'неочікуваний символ', char)
+		print('Lexer: Аварійне завершення програми')
 	except SystemExit as e:
 		# Встановити ознаку неуспішності
 		FSuccess = (False,'Lexer')
@@ -92,7 +95,7 @@ def processing():
 		numLine+=1
 		state=initState
 	if state in (2,6,10,11,12.2):	# keyword, ident, real, int
-		token=getToken(state,lexeme) 
+		token=getToken(state,lexeme)
 		if token!='keyword': # не keyword
 			index=indexIdConst(state,lexeme)
 			print('{0:<3d} {1:<10s} {2:<10s} {3:<2d} '.format(numLine,lexeme,token,index))
@@ -118,6 +121,7 @@ def processing():
 		numChar=putCharBack(numChar) # зірочка
 		state=initState
 	if state in (21,):
+		print('yes') 
 		token=getToken(state,lexeme)
 		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
@@ -130,7 +134,6 @@ def processing():
 		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
-		numChar=putCharBack(numChar) # зірочка
 		state=initState
 	if state in Ferror:  #(101):  # ERROR
 		fail()
@@ -177,7 +180,7 @@ def classOfChar(char, state):
 		res = 'other'
 	elif char in "/":
 		res='/'
-	elif char in ',.;':
+	elif char in ',;':
 		res="Punctuation"
 	elif (char in 'e' and state == 3) or (char in 'e' and state == 5):
 		res="e"
@@ -191,15 +194,20 @@ def classOfChar(char, state):
 		res="eol"
 	elif char in "+-" and state == 7:
 		res=char
-	elif char in "=" or state == 12:
+	elif char in "=" and state == 12:
 		res='='
-	elif char in "<>=" and state == 19:
+	elif char != "=" and state == 12:
+		res='other'
+	#elif char in "<>" and state == 19:
+	#	res='='
+	#elif char not in "<>" and state == 19:
+	elif char == '=' and state == 19:
 		res='='
-	elif char not in "<>=" and state == 19:
+	elif char != '=' and state == 19:
 		res='other'
 	elif char in "!<>=":
 		res='relation_operator'
-	elif char in "+-=()" :
+	elif char in "+-()" :
 		res='arithmetic'
 	else: res='символ не належить алфавіту'
 	return res

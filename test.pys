@@ -1,0 +1,3 @@
+int a;
+real r;
+r == 123.a;

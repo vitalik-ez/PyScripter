@@ -34,13 +34,14 @@ stf={(0, 'ws'):0,
      (0, 'arithmetic'):15, (0, '*'):16, (16, '*'):15, (16, 'other'):18,
      (0, '/'):17, (17, '/'):15, (17, 'other'):18,
      (0, 'relation_operator'):19, (19, '='):20, (19, 'other'):21,
-     (0, 'other'):101,  
+     (0, 'other'):101, 
+     (0, 'minus'):22, (22, 'other'):23, (22, 'Digit'):3,
 }
 
 
 initState = 0   # q0 - стартовий стан
-F={2, 6, 10, 11, 12.1, 12.2, 13, 14, 15, 101, 18, 20, 21}
-Fstar={2, 6, 10, 11, 12.2, 18, 21}   # зірочка
+F={2, 6, 10, 11, 12.1, 12.2, 13, 14, 15, 101, 18, 20, 21, 23}
+Fstar={2, 6, 10, 11, 12.2, 18, 21, 23}   # зірочка
 Ferror={101}# обробка помилок
 
 
@@ -51,7 +52,7 @@ tableOfSymb={}  # Таблиця символів програми (таблиц
 
 state=initState # поточний стан
 
-f = open('test.my_lang', 'r')
+f = open('test.pys', 'r')
 sourceCode=f.read()
 f.close()
 
@@ -63,20 +64,20 @@ numLine=1                       # лексичний аналіз починає
 numChar=-1                      # з першого символа (в Python'і нумерація - з 0)
 char=''                         # ще не брали жодного символа
 lexeme=''                       # ще не починали розпізнавати лексеми
-
-
+column = 0
 def lex():
-	global state,numLine,char,lexeme,numChar,FSuccess
+	global state,numLine,char,lexeme,numChar,FSuccess, column
 	try:
 		while numChar<lenCode:
-			char=nextChar()		
+			char=nextChar()
 			classCh=classOfChar(char, state)		 
 			state=nextState(state,classCh)
 			if (is_final(state)): 			
 				processing()				
 				# if state in Ferror:	    
 					# break					
-			elif state==initState:lexeme=''
+			elif state==initState:
+				lexeme=''
 			else: lexeme+=char		
 		print('Lexer: Лексичний аналіз завершено успішно')
 	except KeyError as e:
@@ -90,9 +91,10 @@ def lex():
 		print('Lexer: Аварійне завершення програми з кодом {0}'.format(e))
 
 def processing():
-	global state,lexeme,char,numLine,numChar, tableOfSymb
+	global state,lexeme,char,numLine,numChar, tableOfSymb, column
 	if state==14:		# \n
 		numLine+=1
+		column=0
 		state=initState
 	if state in (2,6,10,11,12.2):	# keyword, ident, real, int
 		token=getToken(state,lexeme)
@@ -106,6 +108,7 @@ def processing():
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
 		state=initState
+		column -= 1
 	if state in (12.1,13, 15): #12:         #  == rel assign_op # in (12,14):  
 		lexeme+=char
 		token=getToken(state,lexeme)
@@ -120,14 +123,15 @@ def processing():
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
 		state=initState
-	if state in (21,):
-		print('yes') 
+		column -= 1
+	if state in (21,): 
 		token=getToken(state,lexeme)
 		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
 		state=initState
+		column -= 1
 	if state in (20,):
 		lexeme+=char
 		token=getToken(state,lexeme)
@@ -135,6 +139,14 @@ def processing():
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		state=initState
+	if state in (23,):
+		token=getToken(state,lexeme)
+		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
+		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
+		lexeme=''
+		numChar=putCharBack(numChar) # зірочка
+		state=initState
+		column -= 1
 	if state in Ferror:  #(101):  # ERROR
 		fail()
 
@@ -207,6 +219,8 @@ def classOfChar(char, state):
 		res='other'
 	elif char in "!<>=":
 		res='relation_operator'
+	elif char == '-':
+		res='minus'
 	elif char in "+-()" :
 		res='arithmetic'
 	else: res='символ не належить алфавіту'
@@ -221,11 +235,17 @@ def getToken(state,lexeme):
 def indexIdConst(state,lexeme):
 	indx=0
 	if state==2:
-		indx=tableOfId.get(lexeme)
-#		token=getToken(state,lexeme)
-		if indx is None:
-			indx=len(tableOfId)+1
-			tableOfId[lexeme]=indx
+		if lexeme=='true' or lexeme=='false':
+			indx=tableOfConst.get(lexeme)
+			if indx is None:
+				indx=len(tableOfConst)+1
+				tableOfConst[lexeme]=indx
+		else:
+			indx=tableOfId.get(lexeme)
+	#		token=getToken(state,lexeme)
+			if indx is None:
+				indx=len(tableOfId)+1
+				tableOfId[lexeme]=indx
 	if state==6 or state==10: # real
 		indx=tableOfConst.get(lexeme)
 		if indx is None:

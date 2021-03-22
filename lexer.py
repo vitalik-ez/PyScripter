@@ -25,24 +25,27 @@ tableIdentFloatInt = {2:'ident', 6:'real', 10:'real', 11:'int'}
 # δ - state-transition_function
 stf={(0, 'ws'):0,
 	 (0,'Letter'):1,  (1,'Letter'):1, (1,'Digit'):1, (1,'other'):2,
+
      (0,'Digit'):3, (3,'Digit'):3, (3,'other'):11, (3,'e'):7,
-     (3,'dot'):4, (4,'Digit'):5, (5,'Digit'):5, (5,'other'):6, (5,'e'):7,
-     (7,'+'):8 , (7,'-'):8, (7,''):8, (8,'Digit'):9, (9,'Digit'):9, (9,'other'):10, 
+     (3,'dot'):4, (4,'Digit'):5, (4, 'other'):103, (5,'Digit'):5, (5,'other'):6, (5,'e'):7,
+     (7,'+'):8 , (7,'-'):8, (7, 'other'): 102, (8, 'other'): 104, (8,'Digit'):9, (9,'Digit'):9, (9,'other'):10, 
 	 (0,'='):12, (12,'='):12.1, (12,'other'):12.2,
      (0, 'Punctuation'):13,
      (0, 'eol'):14,
      (0, 'arithmetic'):15, (0, '*'):16, (16, '*'):15, (16, 'other'):18,
      (0, '/'):17, (17, '/'):15, (17, 'other'):18,
-     (0, 'relation_operator'):19, (19, '='):20, (19, 'other'):21,
+     #(0, 'relation_operator'):19, (19, '='):20, (19, 'other'):21,
+     (0, '<'):19, (0, '>'):19, (19, '='):20, (19, 'other'):21,
      (0, 'other'):101, 
      (0, 'minus'):22, (22, 'other'):23, (22, 'Digit'):3,
+     (0, '!'):24, (24, '='):25, (24, 'other'):105,
 }
 
 
 initState = 0   # q0 - стартовий стан
-F={2, 6, 10, 11, 12.1, 12.2, 13, 14, 15, 101, 18, 20, 21, 23}
+F={2, 6, 10, 11, 12.1, 12.2, 13, 14, 15, 101, 18, 20, 21, 23, 102, 103, 104, 25, 105}
 Fstar={2, 6, 10, 11, 12.2, 18, 21, 23}   # зірочка
-Ferror={101}# обробка помилок
+Ferror={101, 102, 103, 104, 105}# обробка помилок
 
 
 tableOfId={}   # Таблиця ідентифікаторів
@@ -70,6 +73,7 @@ def lex():
 	try:
 		while numChar<lenCode:
 			char=nextChar()
+			column += 1
 			classCh=classOfChar(char, state)		 
 			state=nextState(state,classCh)
 			if (is_final(state)): 			
@@ -80,10 +84,7 @@ def lex():
 				lexeme=''
 			else: lexeme+=char		
 		print('Lexer: Лексичний аналіз завершено успішно')
-	except KeyError as e:
-		FSuccess = (False,'Lexer')
-		print('Lexer: у рядку', numLine,'неочікуваний символ', char)
-		print('Lexer: Аварійне завершення програми')
+
 	except SystemExit as e:
 		# Встановити ознаку неуспішності
 		FSuccess = (False,'Lexer')
@@ -98,7 +99,7 @@ def processing():
 		state=initState
 	if state in (2,6,10,11,12.2):	# keyword, ident, real, int
 		token=getToken(state,lexeme)
-		if token!='keyword': # не keyword
+		if token!='keyword' and token!='assign_op': # не keyword
 			index=indexIdConst(state,lexeme)
 			print('{0:<3d} {1:<10s} {2:<10s} {3:<2d} '.format(numLine,lexeme,token,index))
 			tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,index)
@@ -147,6 +148,13 @@ def processing():
 		numChar=putCharBack(numChar) # зірочка
 		state=initState
 		column -= 1
+	if state in (25,):
+		lexeme+=char
+		token=getToken(state,lexeme)
+		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
+		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
+		lexeme=''
+		state=initState
 	if state in Ferror:  #(101):  # ERROR
 		fail()
 
@@ -154,12 +162,20 @@ def fail():
 	global state,numLine,char
 	print(numLine)
 	if state == 101:
-		print('Lexer: у рядку ',numLine,' неочікуваний символ '+char)
+		print('Lexer: у рядку ',numLine,' неочікуваний символ ', char)
 		exit(101)
-	#if state == 102:
-#		print('Lexer: у рядку ',numLine,' очікувався символ =, а не '+char)
-#		exit(102)
-	
+	if state == 102:
+		print("Lexer: у рядку",numLine,"очікувався символ '+' або '-', а не", char)
+		exit(102)
+	if state == 103:
+		print("Lexer: у рядку",numLine,"очікувалася цифра (Digit), а не", char)
+		exit(103)
+	if state == 104:
+		print("Lexer: у рядку",numLine,"очікувалася цифра (Digit), а не", char)
+		exit(104)
+	if state == 105:
+		print("Lexer: у рядку",numLine,"очікувався символ '=', а не", char)
+		exit(105)
 		
 def is_final(state):
 	if (state in F):
@@ -213,16 +229,24 @@ def classOfChar(char, state):
 	#elif char in "<>" and state == 19:
 	#	res='='
 	#elif char not in "<>" and state == 19:
+	elif char == '=' and state == 0:
+		res='='
 	elif char == '=' and state == 19:
 		res='='
 	elif char != '=' and state == 19:
 		res='other'
-	elif char in "!<>=":
-		res='relation_operator'
+	elif char in "<>":
+		res=char
 	elif char == '-':
 		res='minus'
 	elif char in "+-()" :
 		res='arithmetic'
+	elif char == '!':
+		res=char
+	elif char == '=' and state == 24:
+		res=char
+	elif char != '=' and state == 24:
+		res='other'
 	else: res='символ не належить алфавіту'
 	return res
 

@@ -1,1 +1,5 @@
-int a = -102.2e+12;
+int a;
+if a << 2 then
+	a = a + 10;
+fi
+int b;

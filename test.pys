@@ -1,5 +1,9 @@
-int a;
-if a << 2 then
-	a = a + 10;
-fi
-int b;
+int a, b;
+if a < 2 then 
+	a = a + 5;
+	if b == true then
+		a = a * 100;
+	fi
+	int a;
+	a = (a+a) + 100;
+fi 

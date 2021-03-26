@@ -109,14 +109,14 @@ def failParse(str,tuple):
 # StatementList = Statement  { Statement }
 # викликає функцію parseStatement() доти,
 # доки parseStatement() повертає True
-def parseStatementList(fiStatement=None):
+def parseStatementList(fiStatement=None, endStatement=None):
     print('parseStatementList():')
-    while parseStatement(fiStatement):
+    while parseStatement(fiStatement, endStatement):
             pass
     return True
 
 
-def parseStatement(fiStatement):
+def parseStatement(fiStatement, endStatement):
     # прочитаємо поточну лексему в таблиці розбору
     values = getSymb()
     if values != 'endOfProgram':
@@ -153,7 +153,7 @@ def parseStatement(fiStatement):
         # parseStatement() має завершити роботу в ifStatement
         elif fiStatement == True and (lex, tok) == ('fi','keyword'):
             return False
-        elif (lex, tok) == ('end','keyword'):
+        elif endStatement == True and (lex, tok) == ('end','keyword'):
             return False
         else: 
             #print('here!')
@@ -161,8 +161,7 @@ def parseStatement(fiStatement):
             #    return False
             # жодна з інструкцій не відповідає 
             # поточній лексемі у таблиці розбору,
-            print("!!!!")
-            failParse('невідповідність інструкцій',(numLine,lex,tok,'ident або if або for'))
+            failParse('невідповідність інструкцій',(numLine,lex,tok,'ident або if (fi) або for (end)'))
             return False
     else:
         print('endOfProgram')
@@ -262,13 +261,15 @@ def parseDeclaration():
                 parseToken(';', 'punct', '\t'*6)
                 break
             parseToken(',', 'punct','\t'*6)
+        return True
         #numLine, lex, tok = getSymb()
-        values = getSymb()
-        if values != 'endOfProgram':
-            numLine, lex, tok = values
-            return True if lex in ('int', 'boolean', 'real') else False
-        else:
-            return False
+        #values = getSymb()
+        #print("values", values)
+        #if values != 'endOfProgram':
+        #    numLine, lex, tok = values
+        #    return True if lex in ('int', 'boolean', 'real') else False
+        #else:
+        #    return False
     else:
         # жодна з інструкцій не відповідає
         # поточній лексемі у таблиці розбору,
@@ -276,7 +277,7 @@ def parseDeclaration():
         return False
 
 
-def parseAssign():
+def parseAssign(IndExpr=None):
     # номер запису таблиці розбору
     global numRow
     print('\t'*3+'parseAssign():')
@@ -292,7 +293,7 @@ def parseAssign():
         # розібрати арифметичний вираз
         parseExpression()
         numLine, lex, tok = getSymb()
-        if tok in ('rel_op'):
+        if tok in ('rel_op') and IndExpr == None:
             print('\t'*5+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
             numRow += 1
             parseExpression()
@@ -389,7 +390,7 @@ def parseFor():
         parseIndExpr()
         parseToken('do','keyword','\t'*4)
         print('parceDoBlock', '\t'*4)
-        parseStatementList()
+        parseStatementList(endStatement=True)
         parseToken('end','keyword','\t'*4)
         return True
     else: return False
@@ -398,10 +399,12 @@ def parseIndExpr():
     global numRow
     numLine, lex, tok = getSymb()
     if tok == 'ident':    
-        parseAssign()
+        parseAssign(IndExpr=True)
         if parseToken('to','keyword','\t'*4):
             parseExpression()
-        return True
+            return True
+        else:
+            return False
     else: 
         # жодна з інструкцій не відповідає 
         # поточній лексемі у таблиці розбору,

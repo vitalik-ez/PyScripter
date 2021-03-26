@@ -67,6 +67,9 @@ numChar=-1                      # з першого символа (в Python'і
 char=''                         # ще не брали жодного символа
 lexeme=''                       # ще не починали розпізнавати лексеми
 column = 0
+
+import sys
+
 def lex():
 	global state,numLine,char,lexeme,numChar,FSuccess, column
 	try:
@@ -89,6 +92,7 @@ def lex():
 		FSuccess = (False,'Lexer')
 		# Повідомити про факт виявлення помилки
 		print('Lexer: Аварійне завершення програми з кодом {0}'.format(e))
+		sys.exit()
 
 def processing():
 	global state,lexeme,char,numLine,numChar, tableOfSymb, column

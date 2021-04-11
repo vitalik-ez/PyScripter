@@ -11,7 +11,7 @@ numRow=1
 # він же - номер останнього запису
 len_tableOfSymb=len(tableOfSymb)
 
-toView = True
+toView = False
 
 # Список для зберігання ПОЛІЗу - 
 # коду у постфіксній формі
@@ -21,13 +21,13 @@ def postfixTranslator():
     # чи був успішним лексичний розбір
     if (True,'Lexer') == lexer.FSuccess:
 
-        print('-'*30)
-        tableToPrint('All')
+        #print('-'*30)
+        #tableToPrint('All')
         #tableOfIdToPrint()
         #tableOfConstToPrint()
 
         #print('tableOfSymb:{0}'.format(tableOfSymb))
-        print('-'*30)
+        #print('-'*30)
         #print(('len_tableOfSymb',len_tableOfSymb))
 
         return parseProgram()
@@ -42,7 +42,7 @@ def parseProgram():
         # повідомити про синтаксичну коректність програми
         print('Translator: Переклад у ПОЛІЗ та синтаксичний аналіз завершились успішно')
         FSuccess = (True,'Translator')
-        return True
+        return FSuccess
     except SystemExit as e:
         FSuccess = (False,'Translator')
         # Повідомити про факт виявлення помилки
@@ -328,7 +328,7 @@ def parseAssign(IndExpr=None):
     numLine, lex, tok = getSymb()
 
     # починаємо трансляцію інструкції присвоювання за означенням:
-    postfixCode.append(lex)     # Трансляція   
+    postfixCode.append((lex, tok))     # Трансляція   
                                 # ПОЛІЗ ідентифікатора - ідентифікатор
 
     if toView: configToPrint(lex,numRow)
@@ -336,6 +336,7 @@ def parseAssign(IndExpr=None):
     # встановити номер нової поточної лексеми
     numRow += 1
 
+    current_row = numRow
     #print('\t'*4+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
     # якщо була прочитана лексема - '='
     if parseToken('=','assign_op','\t\t\t\t'):
@@ -347,17 +348,19 @@ def parseAssign(IndExpr=None):
             numRow += 1
             parseExpression()
             if parseToken(';','punct', '\t\t\t\t'):
+                # ERROR !!!!!!!!!! rel_op
+                postfixCode.append('=')# Трансляція   
+                                    # Бінарний оператор  '='
+                                    # додається після своїх операндів
+                if toView: configToPrint('=',current_row)
                 return True
         elif lex == 'to' or parseToken(';', 'punct', '\t\t\t\t'):
+            postfixCode.append(('=', 'assign_op'))# Трансляція   
+                                    # Бінарний оператор  '='
+                                    # додається після своїх операндів
+            if toView: configToPrint('=',current_row)
             return True
 
-        postfixCode.append('=')# Трансляція   
-                                # Бінарний оператор  '='
-                                # додається після своїх операндів
-        print('!!!!!!!!!!!!')
-        if toView: 
-            configToPrint('=',numRow)
-            return True
         else:
             return False
        
@@ -379,7 +382,7 @@ def parseExpression():
             #print('\t'*6+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
             current_row = numRow
             parseTerm()
-            postfixCode.append(lex) # lex - бінарний оператор  '+' чи '-'
+            postfixCode.append((lex, tok)) # lex - бінарний оператор  '+' чи '-'
             if toView: configToPrint(lex,current_row)
         else:
             F = False
@@ -404,7 +407,7 @@ def parseTerm():
             current_row = numRow
             parseFactor()
 
-            postfixCode.append(lex) # lex - бінарний оператор  '*' чи '/'
+            postfixCode.append((lex, tok)) # lex - бінарний оператор  '*' чи '/'
             if toView: configToPrint(lex,current_row)
         else:
             F = False
@@ -423,7 +426,7 @@ def parseFactor():
     # перша і друга альтернативи для Factor
     # якщо лексема - це константа або ідентифікатор
     if tok in ('int','real','boolval','ident'): # 'boolean'
-        postfixCode.append(lex)      # Трансляція
+        postfixCode.append((lex, tok))      # Трансляція
                                 # ПОЛІЗ константи або ідентифікатора 
                                 # відповідна константа або ідентифікатор
         if toView: configToPrint(lex,numRow)
@@ -502,4 +505,4 @@ def parseBoolExpr():
     return True    
 
 # запуск парсера
-postfixTranslator()  
+#postfixTranslator()  

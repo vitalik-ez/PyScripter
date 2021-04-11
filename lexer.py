@@ -68,7 +68,6 @@ char=''                         # ще не брали жодного симво
 lexeme=''                       # ще не починали розпізнавати лексеми
 column = 0
 
-import sys
 
 def lex():
 	global state,numLine,char,lexeme,numChar,FSuccess, column
@@ -92,7 +91,6 @@ def lex():
 		FSuccess = (False,'Lexer')
 		# Повідомити про факт виявлення помилки
 		print('Lexer: Аварійне завершення програми з кодом {0}'.format(e))
-		sys.exit()
 
 def processing():
 	global state,lexeme,char,numLine,numChar, tableOfSymb, column
@@ -103,11 +101,12 @@ def processing():
 	if state in (2,6,10,11,12.2):	# keyword, ident, real, int
 		token=getToken(state,lexeme)
 		if token!='keyword' and token!='assign_op': # не keyword
-			index=indexIdConst(state,lexeme)
-			print('{0:<3d} {1:<10s} {2:<10s} {3:<2d} '.format(numLine,lexeme,token,index))
+			index=indexIdConst(state,lexeme,token)
+			
+			#print('{0:<3d} {1:<10s} {2:<10s} {3:<2d} '.format(numLine,lexeme,token,index))
 			tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,index)
 		else: # якщо keyword
-			print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token)) #print(numLine,lexeme,token)
+			#print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token)) #print(numLine,lexeme,token)
 			tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
@@ -116,13 +115,13 @@ def processing():
 	if state in (12.1,13, 15): #12:         #  == rel assign_op # in (12,14):  
 		lexeme+=char
 		token=getToken(state,lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token))
+		#print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme='' 
 		state=initState
 	if state in (18,):
 		token=getToken(state,lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
+		#print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
@@ -130,7 +129,7 @@ def processing():
 		column -= 1
 	if state in (21,): 
 		token=getToken(state,lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
+		#print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
@@ -139,13 +138,13 @@ def processing():
 	if state in (20,):
 		lexeme+=char
 		token=getToken(state,lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
+		#print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		state=initState
 	if state in (23,):
 		token=getToken(state,lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
+		#print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		numChar=putCharBack(numChar) # зірочка
@@ -154,7 +153,7 @@ def processing():
 	if state in (25,):
 		lexeme+=char
 		token=getToken(state,lexeme)
-		print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
+		#print('{0:<3d} {1:<10s} {2:<10s} '.format(numLine,lexeme,token,''))
 		tableOfSymb[len(tableOfSymb)+1] = (numLine,lexeme,token,'')
 		lexeme=''
 		state=initState
@@ -163,7 +162,6 @@ def processing():
 
 def fail():
 	global state,numLine,char
-	print(numLine)
 	if state == 101:
 		print('Lexer: у рядку ',numLine,' неочікуваний символ ', char)
 		exit(101)
@@ -259,38 +257,86 @@ def getToken(state,lexeme):
 	except KeyError:
 		return tableIdentFloatInt[state]
 
-def indexIdConst(state,lexeme):
+def indexIdConst(state,lexeme, token):
 	indx=0
 	if state==2:
 		if lexeme=='true' or lexeme=='false':
 			indx=tableOfConst.get(lexeme)
 			if indx is None:
 				indx=len(tableOfConst)+1
-				tableOfConst[lexeme]=indx
+				tableOfConst[lexeme]=(indx, 'boolean', lexeme)
 		else:
 			indx=tableOfId.get(lexeme)
 	#		token=getToken(state,lexeme)
-			if indx is None:
+			if indx is not None:
+				indx = indx[0]
+			else:
 				indx=len(tableOfId)+1
-				tableOfId[lexeme]=indx
+				tableOfId[lexeme]=(indx,'type_undef','val_undef')
 	if state==6 or state==10: # real
 		indx=tableOfConst.get(lexeme)
 		if indx is None:
 			indx=len(tableOfConst)+1
-			tableOfConst[lexeme]=indx
+			tableOfConst[lexeme]=(indx,token,float(lexeme))
 	if state==11: #int
 		indx=tableOfConst.get(lexeme)
-		if indx is None:
+		if indx is not None:
+			indx = indx[0]
+		else:
 			indx=len(tableOfConst)+1
-			tableOfConst[lexeme]=indx
+			tableOfConst[lexeme]=(indx,token,int(lexeme))
 	return indx
+
+def tableToPrint(Tbl):
+	if Tbl=="Symb":
+		tableOfSymbToPrint()
+	elif Tbl=="Id":
+		tableOfIdToPrint()
+	elif Tbl=="Const":
+		tableOfConstToPrint()
+	else:
+		tableOfSymbToPrint()
+		tableOfIdToPrint()
+		tableOfConstToPrint()
+	return True
+
+def tableOfSymbToPrint():
+	print("\n Таблиця символів")
+	s1 = '{0:<10s} {1:<10s} {2:<10s} {3:<13s} {4:<5s} '
+	s2 = '{0:<10d} {1:<10d} {2:<10s} {3:<13s} {4:<5s} '
+	print(s1.format("numRec","numLine","lexeme","token","index"))
+	for numRec in tableOfSymb: #range(1,lns+1):
+		numLine,lexeme,token,index = tableOfSymb[numRec]
+		print(s2.format(numRec,numLine,lexeme,token,str(index) ))
+
+
+def tableOfIdToPrint():
+	print("\n Таблиця ідентифікаторів")
+	s1 = '{0:<10s} {1:<15s} {2:<15s} {3:<10s} '
+	print(s1.format("Ident","Type","Value","Index"))
+	s2 = '{0:<10s} {2:<15s} {3:<15s} {1:<10d} '
+	for id in tableOfId: 
+		index,type,val = tableOfId[id]
+		print(s2.format(id,index,type,str(val)))
+
+def tableOfConstToPrint():
+	print("\n Таблиця констант")
+	s1 = '{0:<10s} {1:<10s} {2:<10s} {3:<10s} '
+	print(s1.format("Const","Type","Value","Index"))
+	s2 = '{0:<10s} {2:<10s} {3:<10} {1:<10d} '
+	for cnst in tableOfConst: 
+		index,type,val = tableOfConst[cnst]
+		print(s2.format(str(cnst),index,type,val))
+
 
 
 # запуск лексичного аналізатора	
-lex()
+# lex()
+# запуск лексичного аналізатора	
+#lex()
 
 # Таблиці: розбору, ідентифікаторів та констант
-print('-'*30)
+#print('-'*30)
 #print('tableOfSymb:{0}'.format(tableOfSymb))
 #print('tableOfId:{0}'.format(tableOfId))
 #print('tableOfConst:{0}'.format(tableOfConst))

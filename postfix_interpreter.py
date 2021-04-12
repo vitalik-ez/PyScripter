@@ -30,28 +30,28 @@ print('-'*30)
 # print('\n---------------Код програми у постфіксній формі (ПОЛІЗ): \n{0}'.format(postfixCode))
 
 announcement_variable = {}
-
 def postfixProcessing():
-    global stack, postfixCode, announcement_variable
+    global stack, postfixCode, announcement_variable, maxNumb
     maxNumb=len(postfixCode)
     try:
         for i in range(0,maxNumb):
             lex,tok = postfixCode.pop(0)
 
-            # перевірка чи була обявлена змінна ident
+            # перевірка чи була об'явлена змінна ident
             if tok == 'ident':
                 for numLine, value in tableOfSymb.items():
                     if lex == value[1] and value[-1] == tableOfId[lex][0]:
                         check_announcement = [ i for i in list(tableOfSymb.values()) if i[0] == value[0] ]
                         announcement = False
-                        for i in check_announcement: 
-                            if i[1] in ('int', 'real', 'boolean'):
+                        for j in check_announcement: 
+                            if j[1] in ('int', 'real', 'boolean'):
                                 announcement = True
-                                announcement_variable[lex] = i[1]
+                                announcement_variable[lex] = j[1]
                                 break
                         if not announcement:
                             failRunTime('змінна не була оголошена', lex)
                         break
+            ###
 
             if tok in ('int','real','ident'): # boolean !!!
                stack.push((lex,tok))
@@ -86,23 +86,46 @@ def configToPrint(step,lex,tok,maxN):
                 tableToPrint(Tbl)
     return True
 
+
 def doIt(lex,tok):
-    global stack, postfixCode, tableOfId, tableOfConst
+    global stack, postfixCode, tableOfId, tableOfConst, announcement_variable, maxNumb
+    exec_typing = lambda type_var, var: exec(f'temporary = {type_var}({var})', globals())
     if (lex,tok) == ('=', 'assign_op'):
         # зняти з вершини стека запис (правий операнд = число)
         (lexR,tokR) = stack.pop()
         # зняти з вершини стека ідентифікатор (лівий операнд)
         (lexL,tokL) = stack.pop()
-        #print('Left', (lexL,tokL))
-        #print('Right', (lexR,tokR))
+        print('Left', (lexL,tokL))
+        print('Right', (lexR,tokR))
+        print(announcement_variable[lexL], tokR)
+        if tokR == 'ident':
+            print(tableOfId)
+            tokR = tableOfId[lexR][1]
+            lexR = tableOfId[lexR][2]
+            
+        if announcement_variable[lexL] != tokR:
+            if announcement_variable[lexL] == 'real':
+                type_var = 'float'
+            elif announcement_variable[lexL] == 'boolean':
+                type_var = 'bool'
+            else:
+                type_var = announcement_variable[lexL]
+            exec_typing(type_var, lexR)
+            lexR = temporary
+            print('yes', announcement_variable[lexL])
+            toTableOfConst(lexR, announcement_variable[lexL])
+            print(tableOfConst[str(lexR)][2])
+            tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[str(lexR)][1], tableOfConst[str(lexR)][2])
+        else:
         # виконати операцію:
         # оновлюємо запис у таблиці ідентифікаторів
         # ідентифікатор/змінна  
         # (index не змінюється, 
         # тип - як у константи,  
         # значення - як у константи)
-        tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[lexR][1], tableOfConst[lexR][2])
+            tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[lexR][1], tableOfConst[lexR][2])
     elif tok in ('add_op','mult_op'):
+        #print(lex)
         # зняти з вершини стека запис (правий операнд)
         (lexR,tokR) = stack.pop()
         # зняти з вершини стека запис (лівий операнд)
@@ -116,6 +139,23 @@ def doIt(lex,tok):
             processing_add_mult_op((lexL,tokL),lex,(lexR,tokR))
             # stack.push()
             pass
+
+    elif tok == 'NEG':
+        (lexR,tokR) = stack.pop()
+        if tokR == 'ident':
+            if tableOfId[lexR][1] == 'type_undef':
+                failRunTime('неініціалізована змінна',(lexR,tableOfId[lexR],(lexL,tokL),lex,(lexR,tokR)))
+            else:
+                valR,tokR = (tableOfId[lexR][2],tableOfId[lexR][1])
+        else:
+            valR = tableOfConst[lexR][2]
+        
+        valR = -1 * valR
+        stack.push((str(valR),tokR))
+        toTableOfConst(valR,tokR)
+
+    elif tok == 'PLS':
+        pass
     return True
 
 

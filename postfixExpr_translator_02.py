@@ -423,13 +423,34 @@ def parseFactor():
     numLine, lex, tok = values
     #print('\t'*7+'parseFactor():=============рядок: {0}\t (lex, tok):{1}'.format(numLine,(lex, tok)))
     
+    # для - мінуса перед значенням
+    unary = None
+    if tok == 'add_op':
+        unary = (lex, 'NEG') if lex == '-' else (lex, 'PLS')# Трансляція мінус - або плюс + до змінної
+        #if lex == '-':
+        #    postfixCode.append((lex, 'NEG'))      
+        #else:
+        #    postfixCode.append((lex, 'PLS')) 
+        numRow += 1
+        values = getSymb()
+        if values == 'endOfProgram':
+            failParse('неочікуваний кінець програми endOfProgram', (numRow, 'ident або int, real, boolean'))
+            return False
+        numLine, lex, tok = values  
+    ### 
+
     # перша і друга альтернативи для Factor
     # якщо лексема - це константа або ідентифікатор
-    if tok in ('int','real','boolval','ident'): # 'boolean'
+    if tok in ('int','real','boolval','ident'): 
         postfixCode.append((lex, tok))      # Трансляція
                                 # ПОЛІЗ константи або ідентифікатора 
                                 # відповідна константа або ідентифікатор
         if toView: configToPrint(lex,numRow)
+        # + -
+        if unary is not None:
+            postfixCode.append(unary) 
+        ###
+
         numRow += 1
         #print('\t'*7+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
     
@@ -440,6 +461,10 @@ def parseFactor():
         parseExpression()
         parseToken(')','brackets_op','\t'*7)
         #print('\t'*7+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
+        # + -
+        if unary is not None:
+            postfixCode.append(unary) 
+        ###
     else:
         failParse('невідповідність у Expression.Factor',(numLine,lex,tok,'int, float, ident або \'(\' Expression \')\'')) # rel_op
     return True

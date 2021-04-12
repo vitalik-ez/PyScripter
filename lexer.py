@@ -36,7 +36,7 @@ stf={(0, 'ws'):0,
      (0, '/'):17, (17, '/'):15, (17, 'other'):18,
      (0, '<'):19, (0, '>'):19, (19, '='):20, (19, 'other'):21,
      (0, 'other'):101, 
-     (0, 'minus'):22, (22, 'other'):23, (22, 'Digit'):3,
+     #(0, 'minus'):22, (22, 'other'):23, (22, 'Digit'):3,
      (0, '!'):24, (24, '='):25, (24, 'other'):105,
 }
 
@@ -238,8 +238,8 @@ def classOfChar(char, state):
 		res='other'
 	elif char in "<>":
 		res=char
-	elif char == '-':
-		res='minus'
+	#elif char == '-':
+	#	res='minus'
 	elif char in "+-()" :
 		res='arithmetic'
 	elif char == '!':

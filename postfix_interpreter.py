@@ -30,7 +30,6 @@ print('-'*30)
 # print('\n---------------Код програми у постфіксній формі (ПОЛІЗ): \n{0}'.format(postfixCode))
 def check_name_variables():
     global tableOfSymb
-    print('============= CHECK')
     a, list_used_names = list(tableOfSymb.values()), []
     print(a)
     for i in range(len(a)):
@@ -43,8 +42,6 @@ def check_name_variables():
                     else:
                         list_used_names.append(a[i][1])
                 i += 1
-                
-    print(list_used_names)
 
 announcement_variable = {}
 def postfixProcessing():

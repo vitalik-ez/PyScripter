@@ -53,12 +53,12 @@ def postfixProcessing():
                         break
             ###
 
-            if tok in ('int','real','ident'): # boolean !!!
+            if tok in ('int','real','ident', 'boolval'): # boolean !!!
                stack.push((lex,tok))
             else: doIt(lex,tok)
 
             if toView: configToPrint(i+1, lex, tok, maxNumb)
-        print(announcement_variable)
+        #print(announcement_variable)
         return True
     except SystemExit as e:
         # Повідомити про факт виявлення помилки
@@ -80,10 +80,9 @@ def configToPrint(step,lex,tok,maxN):
 
     print('postfixCode={0}'.format(postfixCode)) 
     stack.print()
-
     if  step == maxN: 
-            for Tbl in ('Id','Const','Label'):
-                tableToPrint(Tbl)
+        for Tbl in ('Id','Const'): # 'Label'
+            tableToPrint(Tbl)
     return True
 
 
@@ -95,35 +94,34 @@ def doIt(lex,tok):
         (lexR,tokR) = stack.pop()
         # зняти з вершини стека ідентифікатор (лівий операнд)
         (lexL,tokL) = stack.pop()
-        print('Left', (lexL,tokL))
-        print('Right', (lexR,tokR))
-        print(announcement_variable[lexL], tokR)
-        if tokR == 'ident':
-            print(tableOfId)
-            tokR = tableOfId[lexR][1]
-            lexR = tableOfId[lexR][2]
-            
-        if announcement_variable[lexL] != tokR:
-            if announcement_variable[lexL] == 'real':
-                type_var = 'float'
-            elif announcement_variable[lexL] == 'boolean':
-                type_var = 'bool'
-            else:
-                type_var = announcement_variable[lexL]
-            exec_typing(type_var, lexR)
-            lexR = temporary
-            print('yes', announcement_variable[lexL])
-            toTableOfConst(lexR, announcement_variable[lexL])
-            print(tableOfConst[str(lexR)][2])
-            tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[str(lexR)][1], tableOfConst[str(lexR)][2])
-        else:
-        # виконати операцію:
-        # оновлюємо запис у таблиці ідентифікаторів
-        # ідентифікатор/змінна  
-        # (index не змінюється, 
-        # тип - як у константи,  
-        # значення - як у константи)
+
+        if announcement_variable[lexL] == 'boolean' and tokR == 'boolval':
             tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[lexR][1], tableOfConst[lexR][2])
+        else:
+            if tokR == 'ident':
+                tokR = tableOfId[lexR][1]
+                lexR = tableOfId[lexR][2]
+            print('&&&', tokR)
+            if announcement_variable[lexL] != tokR:
+                if announcement_variable[lexL] == 'real':
+                    type_var = 'float'
+                elif announcement_variable[lexL] == 'boolean':
+                    type_var = 'bool'
+                else:
+                    type_var = announcement_variable[lexL]
+                exec_typing(type_var, lexR)
+                lexR = temporary
+                print('!!!!!!!!!!lexR', lexR, 'type_var', type_var)
+                toTableOfConst(lexR, announcement_variable[lexL])
+                tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[str(lexR)][1], tableOfConst[str(lexR)][2])
+            else:
+            # виконати операцію:
+            # оновлюємо запис у таблиці ідентифікаторів
+            # ідентифікатор/змінна  
+            # (index не змінюється, 
+            # тип - як у константи,  
+            # значення - як у константи)
+                tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[lexR][1], tableOfConst[lexR][2])
     elif tok in ('add_op','mult_op'):
         #print(lex)
         # зняти з вершини стека запис (правий операнд)
@@ -133,12 +131,12 @@ def doIt(lex,tok):
         #print('Left', (lexL,tokL))
         #print('Right', (lexR,tokR))
 
-        if (tokL,tokR) in (('int','real'),('real','int')):
-            failRunTime('невідповідність типів',((lexL,tokL),lex,(lexR,tokR)))
-        else:
-            processing_add_mult_op((lexL,tokL),lex,(lexR,tokR))
+        #if (tokL,tokR) in (('int','real'),('real','int')):
+        #    failRunTime('невідповідність типів',((lexL,tokL),lex,(lexR,tokR)))
+        #else:
+        processing_add_mult_op((lexL,tokL),lex,(lexR,tokR))
             # stack.push()
-            pass
+        #    pass
 
     elif tok == 'NEG':
         (lexR,tokR) = stack.pop()
@@ -192,9 +190,11 @@ def getValue(vtL,lex,vtR):
     global stack, postfixCode, tableOfId, tableOfConst
     valL,lexL,tokL = vtL
     valR,lexR,tokR = vtR
-    if (tokL,tokR) in (('int','real'),('real','int')):
-        failRunTime('невідповідність типів',((lexL,tokL),lex,(lexR,tokR)))
-    elif lex == '+':
+    #if (tokL,tokR) in (('int','real'),('real','int')):
+    #    print('yes')
+    #    failRunTime('невідповідність типів',((lexL,tokL),lex,(lexR,tokR)))
+    if lex == '+':
+        print('???? lexl', lexL, tokL, ' lexR', lexR, tokR )
         value = valL + valR
     elif lex == '-':
         value = valL - valR
@@ -208,6 +208,12 @@ def getValue(vtL,lex,vtR):
         value = int(valL / valR)
     else:
         pass
+
+    ###
+    if (tokL, tokR) in (('int', 'real'), ('real', 'int')):
+        tokL = 'real'
+    ###
+
     stack.push((str(value),tokL))
     toTableOfConst(value,tokL)
 

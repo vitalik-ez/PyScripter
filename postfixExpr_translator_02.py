@@ -345,16 +345,15 @@ def parseAssign(IndExpr=None):
         numLine, lex, tok = getSymb()
         if tok in ('rel_op') and IndExpr == None:
             #print('\t'*5+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
-
-            # Трансляція 
-            postfixCode.append((lex, 'rel_op'))  
-            if toView: configToPrint('=',current_row)
-            ###
-
             numRow += 1
             parseExpression()
+
             if parseToken(';','punct', '\t\t\t\t'):
                 # ERROR !!!!!!!!!! rel_op
+                # Трансляція 
+                postfixCode.append((lex, 'rel_op'))  
+                if toView: configToPrint('=',current_row)
+                ###
                 postfixCode.append(('=', 'assign_op'))# Трансляція   
                                     # Бінарний оператор  '='
                                     # додається після своїх операндів

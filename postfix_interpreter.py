@@ -28,11 +28,29 @@ print('-'*30)
 
 # lenCode=len(str(postfixCode))
 # print('\n---------------Код програми у постфіксній формі (ПОЛІЗ): \n{0}'.format(postfixCode))
+def check_name_variables():
+    global tableOfSymb
+    print('============= CHECK')
+    a, list_used_names = list(tableOfSymb.values()), []
+    print(a)
+    for i in range(len(a)):
+        if a[i][1] in ('int', 'real', 'boolean'):
+            i += 1
+            while a[i][1] != ';':
+                if a[i][1] != ',':
+                    if a[i][1] in list_used_names:
+                        failRunTime('зміна вже використовується', a[i][1])
+                    else:
+                        list_used_names.append(a[i][1])
+                i += 1
+                
+    print(list_used_names)
 
 announcement_variable = {}
 def postfixProcessing():
     global stack, postfixCode, announcement_variable, maxNumb
     maxNumb=len(postfixCode)
+    check_name_variables()
     try:
         for i in range(0,maxNumb):
             lex,tok = postfixCode.pop(0)
@@ -52,10 +70,10 @@ def postfixProcessing():
                             failRunTime('змінна не була оголошена', lex)
                         break
             ###
-
             if tok in ('int','real','ident', 'boolval'): # boolean !!!
-               stack.push((lex,tok))
-            else: doIt(lex,tok)
+                stack.push((lex,tok))
+            else: 
+                doIt(lex,tok)
 
             if toView: configToPrint(i+1, lex, tok, maxNumb)
         #print(announcement_variable)
@@ -94,14 +112,17 @@ def doIt(lex,tok):
         (lexR,tokR) = stack.pop()
         # зняти з вершини стека ідентифікатор (лівий операнд)
         (lexL,tokL) = stack.pop()
-
+        
+        #if tokR == 'boolval':
+        #    lexR = str(lexR)[0].upper() + str(lexR)[1:]
+        #print(lexR, tokR)
         if announcement_variable[lexL] == 'boolean' and tokR == 'boolval':
             tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[lexR][1], tableOfConst[lexR][2])
         else:
             if tokR == 'ident':
                 tokR = tableOfId[lexR][1]
                 lexR = tableOfId[lexR][2]
-            print('&&&', tokR)
+
             if announcement_variable[lexL] != tokR:
                 if announcement_variable[lexL] == 'real':
                     type_var = 'float'
@@ -109,9 +130,17 @@ def doIt(lex,tok):
                     type_var = 'bool'
                 else:
                     type_var = announcement_variable[lexL]
+
+                ###
+                if lexR in ('true', 'false'):
+                    lexR = str(lexR)[0].upper() + str(lexR)[1:]
+                ###
                 exec_typing(type_var, lexR)
                 lexR = temporary
-                print('!!!!!!!!!!lexR', lexR, 'type_var', type_var)
+                ###
+                if lexR in (True, False):
+                    lexR = str(lexR)[0].lower() + str(lexR)[1:]
+                ###
                 toTableOfConst(lexR, announcement_variable[lexL])
                 tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[str(lexR)][1], tableOfConst[str(lexR)][2])
             else:
@@ -122,7 +151,7 @@ def doIt(lex,tok):
             # тип - як у константи,  
             # значення - як у константи)
                 tableOfId[lexL] = (tableOfId[lexL][0],  tableOfConst[lexR][1], tableOfConst[lexR][2])
-    elif tok in ('add_op','mult_op'):
+    elif tok in ('add_op','mult_op', 'exp_op'):
         #print(lex)
         # зняти з вершини стека запис (правий операнд)
         (lexR,tokR) = stack.pop()
@@ -154,6 +183,15 @@ def doIt(lex,tok):
 
     elif tok == 'PLS':
         pass
+    elif tok == 'rel_op':
+        # зняти з вершини стека запис (правий операнд)
+        (lexR,tokR) = stack.pop()
+        # зняти з вершини стека запис (лівий операнд)
+        (lexL,tokL) = stack.pop()
+        #if (tokL,tokR) in (('int','real'),('real','int')):
+        #    failRunTime('невідповідність типів',((lexL,tokL),lex,(lexR,tokR)))
+        #else:
+        processing_add_mult_op((lexL,tokL),lex,(lexR,tokR))
     return True
 
 
@@ -193,8 +231,26 @@ def getValue(vtL,lex,vtR):
     #if (tokL,tokR) in (('int','real'),('real','int')):
     #    print('yes')
     #    failRunTime('невідповідність типів',((lexL,tokL),lex,(lexR,tokR)))
+
+    relatioal_operation = lambda valL, lex, valR: exec(f'temporary = {valL} {lex} {valR}', globals())
+
+    if isinstance(valL, str):
+        if valL == 'true':
+            valL = True
+        elif valL == 'false':
+            valL = False
+        else:
+            valL = float(valL) if valL.rfind('.') else int(varlL)
+    elif isinstance(valR, str):
+        if valR == 'true':
+            valR = True
+        elif valR == 'false':
+            valR = False
+        else:
+            valR = float(valR) if valR.rfind('.') else int(varlR)
+
+
     if lex == '+':
-        print('???? lexl', lexL, tokL, ' lexR', lexR, tokR )
         value = valL + valR
     elif lex == '-':
         value = valL - valR
@@ -202,10 +258,25 @@ def getValue(vtL,lex,vtR):
         value = valL * valR
     elif lex == '/' and valR == 0:
         failRunTime('ділення на нуль',((lexL,tokL),lex,(lexR,tokR)))
-    elif lex == '/' and tokL=='real':
+    elif lex == '/': # and (tokL, tokR) in (('real', 'int'), ('int', 'real'), ('real', 'int'))
         value = valL / valR
-    elif lex == '/' and tokL=='int':
-        value = int(valL / valR)
+        tokL = 'real'
+    elif lex == '**':
+        print(valR, valL)
+        value = valL ** valR
+    elif lex == '//':
+        value = valL // valR
+    elif lex in ('<', '<=', '==', '>=', '>', '!='):
+        if valL in ('true', 'false'):
+            valL = valL[0].upper() + valL[1:]
+        if valR in ('true', 'false'):
+            valR = valR[0].upper() + valR[1:]
+        relatioal_operation(valL, lex, valR)
+        value = str(temporary)[0].lower() + str(temporary)[1:]
+        tokL = 'boolval'
+
+    #elif lex == '/' and tokL=='int':
+    #    value = int(valL / valR)
     else:
         pass
 
@@ -234,7 +305,7 @@ def failRunTime(str,tuple):
         exit(1)
     elif str == 'неініціалізована змінна':
         (lx,rec,(lexL,tokL),lex,(lexR,tokR))=tuple
-        print('RunTime ERROR: \n\t Значення змінної {0}:{1} не визначене. Зустрылось у {2} {3} {4}'.format(lx,rec,(lexL,tokL),lex,(lexR,tokR)))
+        print('RunTime ERROR: \n\t Значення змінної {0}:{1} не визначене. Зустрілось у {2} {3} {4}'.format(lx,rec,(lexL,tokL),lex,(lexR,tokR)))
         exit(2)
     elif str == 'ділення на нуль':
         ((lexL,tokL),lex,(lexR,tokR))=tuple
@@ -242,6 +313,9 @@ def failRunTime(str,tuple):
         exit(3)
     elif str == 'змінна не була оголошена':
         print('RunTime ERROR: \n\t Змінна {0} не була оголошена'.format(tuple))
+        exit(1000)
+    elif str == 'зміна вже використовується':
+        print('RunTime ERROR: \n\t Змінна {0} вже оголошена'.format(tuple))
         exit(1000)
 
 postfixInterpreter()

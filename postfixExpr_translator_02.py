@@ -430,7 +430,7 @@ def parseFactor():
     
     # для - мінуса перед значенням
     unary = None
-    if tok == 'add_op':
+    if tok == 'add_op' and lex == '-':
         unary = (lex, 'NEG') if lex == '-' else (lex, 'PLS')# Трансляція мінус - або плюс + до змінної
         #if lex == '-':
         #    postfixCode.append((lex, 'NEG'))      

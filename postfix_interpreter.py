@@ -31,7 +31,7 @@ print('-'*30)
 def check_name_variables():
     global tableOfSymb
     a, list_used_names = list(tableOfSymb.values()), []
-    print(a)
+    #print(a)
     for i in range(len(a)):
         if a[i][1] in ('int', 'real', 'boolean'):
             i += 1
@@ -109,6 +109,10 @@ def doIt(lex,tok):
         (lexR,tokR) = stack.pop()
         # зняти з вершини стека ідентифікатор (лівий операнд)
         (lexL,tokL) = stack.pop()
+
+        if tokR == 'ident':
+            if tableOfId[lexR][1] == 'type_undef':
+                failRunTime('неініціалізована змінна',(lexR,tableOfId[lexR],(lexL,tokL),lex,(lexR,tokR)))
         
         #if tokR == 'boolval':
         #    lexR = str(lexR)[0].upper() + str(lexR)[1:]

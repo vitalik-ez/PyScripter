@@ -406,12 +406,19 @@ def parseTerm():
             failParse('неочікуваний кінець програми endOfProgram', (numRow, ';'))
             return False
         numLine, lex, tok = values
+
         if tok in ('mult_op') or tok in ('exp_op') : # or tok in ('rel_op')
             numRow += 1
             #print('\t'*6+'в рядку {0} - {1}'.format(numLine,(lex, tok)))
             current_row = numRow
-            parseFactor()
 
+            #!!!!!!!!!
+            if tok == 'mult_op':
+                parseFactor()
+            else:
+                parseExpression()
+
+            
             postfixCode.append((lex, tok)) # lex - бінарний оператор  '*' чи '/'
             if toView: configToPrint(lex,current_row)
         else:

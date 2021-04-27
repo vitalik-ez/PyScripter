@@ -225,20 +225,22 @@ def parsePrint():
     return False
 
 def parseIdentList():
-    global numRow
+    global numRow, postfixCode
     #print('\t'*4+'parse IdentList()')
     while True:
         numRow += 1
         #print('\t'*5+'parse Ident()')
         numLine, lex, tok = getSymb()
         parseToken(lex, 'ident', '\t'*6)
+        postfixCode.append((lex, tok))
+        postfixCode.append(('OUT', 'out'))
         numLine, lex, tok = getSymb()
         if lex != ',':
             break
 
 
 def parseInput():
-    global numRow
+    global numRow, postfixCode
     #print('\t'*3 + ' parseInput():')
     numRow += 1
     numLine, lex, tok = getSymb()
@@ -247,6 +249,8 @@ def parseInput():
         #print('\t'*4, 'parseIdent():')
         numRow += 1
         numLine, lex, tok = getSymb()
+        postfixCode.append((lex, tok))
+        postfixCode.append(('INPUT', 'input'))
         if tok == 'ident':
             #print('\t'*5 + 'parseToken: В рядку {0} токен {1}'.format(numLine, (lex, tok)))
             numRow += 1

@@ -1,11 +1,6 @@
-int a, z;
-z = 0;
-for a = 0 to 1 do
-	z = z + 10;
-	if a >= 0 then
-		z = z + 7;
-		if z > 0 then
-			z = z + 3;
-		fi
-	fi
+int a;
+real r;
+r = 5;
+for a = 0 to 5 do
+	r = r + 10;
 end 

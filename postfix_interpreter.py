@@ -79,6 +79,45 @@ def doForJumps(tok, instrNum):
     elif tok == 'loop_end':
         return tableOfLabel['m1']
 
+
+def input_output(tok):
+    global announcement_variable
+    if tok == 'out':
+        out_v = stack.pop()
+        value = tableOfId[out_v[0]][2]
+        if value == 'val_undef':
+            failRunTime('неініціалізована змінна при виводі', out_v[0])
+        else:
+            print(f'PRINT: {out_v[0]} =', tableOfId[out_v[0]][2])
+    elif tok == 'input':
+        out_v = stack.pop()
+        type_var = announcement_variable[out_v[0]]
+        try:
+            value = input(f'Enter a variable value: {type_var} {out_v[0]} = ')
+            if type_var == 'int':
+                if value.rfind('.'):
+                    value = int(float(value))
+                else:
+                    value = int(value)
+            elif type_var == 'real':
+                value = float(value)
+            elif type_var == 'boolean':
+                #if value != 'true' and value != 'false':
+                #    failRunTime('введення не відповідного типу змінної', type_var)
+                if value == 'true':
+                    value = True
+                elif value == 'false':
+                    value = False
+                else:
+                    value = bool(float(value))
+                value = str(value).lower()
+            index = tableOfId[out_v[0]][0]
+            tableOfId[out_v[0]] = (index, type_var, value)
+        except ValueError as e:
+            failRunTime('введення не відповідного типу змінної', type_var)
+        
+
+
 announcement_variable = {}
 def postfixProcessing():
     global stack, postfixCode, announcement_variable, maxNumb
@@ -111,12 +150,15 @@ def postfixProcessing():
                 nextNum = doJumps(tok, instrNum)
             elif tok in ('jfor', 'jfor_condition', 'loop_end'):
                 nextNum = doForJumps(tok, instrNum)
+            elif tok in ('out', 'input'):
+                input_output(tok)
+                nextNum = instrNum + 1
             else: 
                 doIt(lex,tok)
                 nextNum = instrNum + 1
-            if toView: configToPrint(instrNum+1, lex, tok, maxNumb)
+            #if toView: configToPrint(instrNum+1, lex, tok, maxNumb)
             instrNum = nextNum
-        #print(announcement_variable)
+        configToPrint(maxNumb, lex, tok, maxNumb)
         return True
     except SystemExit as e:
         # Повідомити про факт виявлення помилки
@@ -142,6 +184,7 @@ def configToPrint(step,lex,tok,maxN):
     if  step == maxN: 
         for Tbl in ('Id','Const', 'Label'): # 'Label'
             tableToPrint(Tbl)
+
     return True
 
 
@@ -362,5 +405,10 @@ def failRunTime(str,tuple):
     elif str == 'зміна вже використовується':
         print('RunTime ERROR: \n\t Змінна {0} вже оголошена'.format(tuple))
         exit(1000)
-
+    elif str == 'неініціалізована змінна при виводі':
+        print('RunTime ERROR: \n\t Змінна {0} не ініціалізована (вивід)'.format(tuple))
+        exit(1056)
+    elif str == 'введення не відповідного типу змінної':
+        print('RunTime ERROR: \n\tНевідповідність типу введенного значення.\n\tОчікувався тип {0}'.format(tuple))
+        exit(1200)
 postfixInterpreter()

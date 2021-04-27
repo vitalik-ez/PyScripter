@@ -1,13 +1,11 @@
-real a;
-a = 12;
-boolean b;
-b = true;
-if a != 102 then
-	a = a / 1000;
-	if b == true then
-		a = a * 999;
-		if a > 0 then
-			a = a + 1000000;
+int a, z;
+z = 0;
+for a = 0 to 1 do
+	z = z + 10;
+	if a >= 0 then
+		z = z + 7;
+		if z > 0 then
+			z = z + 3;
 		fi
 	fi
-fi 
+end 

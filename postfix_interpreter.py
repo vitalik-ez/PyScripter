@@ -43,16 +43,10 @@ def check_name_variables():
                         list_used_names.append(a[i][1])
                 i += 1
 
-def processing_colon():
-    global postfixCode
-    a = postfixCode.pop(0)
-    print('processing_colon', a)
-
 def processing_JF(instrNum):
     global postfixCode, stack, tableOfLabel
     b = stack.pop()
     if b == ('true', 'boolval'):
-        print('yes')
         return instrNum+1
     else:
         number = postfixCode[instrNum-1][0][1]
@@ -64,13 +58,26 @@ def doJumps(tok, instrNum):
     if tok == 'jump':
         next = processing_JUMP()
     elif tok == 'colon':
-        #next = processing_colon(instrNum)
         return instrNum+1
     elif tok == 'jf':
         next = processing_JF(instrNum)
     return next
 
-
+def doForJumps(tok, instrNum):
+    if tok == 'jfor':
+        b = stack.pop()
+        if b == ('true', 'boolval'):
+            return instrNum + 1
+        else:
+            return instrNum + 6
+    elif tok == 'jfor_condition':
+        b = stack.pop()
+        if b == ('false', 'boolval'):
+            return tableOfLabel['LOOP_END']+1
+        else:
+            return instrNum + 1
+    elif tok == 'loop_end':
+        return tableOfLabel['m1']
 
 announcement_variable = {}
 def postfixProcessing():
@@ -102,6 +109,8 @@ def postfixProcessing():
                 nextNum = instrNum + 1
             elif tok in ('jf', 'colon'):
                 nextNum = doJumps(tok, instrNum)
+            elif tok in ('jfor', 'jfor_condition', 'loop_end'):
+                nextNum = doForJumps(tok, instrNum)
             else: 
                 doIt(lex,tok)
                 nextNum = instrNum + 1

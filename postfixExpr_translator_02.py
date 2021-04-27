@@ -503,7 +503,6 @@ def parseIf():
         parseStatementList(fiStatement=True)
         parseToken('fi','keyword','\t'*4)
 
-        #m2 = createLabel()
         postfixCode.append(m1)
         setValLabel(m1)
         postfixCode.append((':','colon'))
@@ -520,6 +519,9 @@ def parseFor():
         #print('parceDoBlock', '\t'*4)
         parseStatementList(endStatement=True)
         parseToken('end','keyword','\t'*4)
+        end_loop = createLabel_end_loop()
+        postfixCode.append(end_loop)
+        setValLabel(end_loop)
         return True
     else: return False
 
@@ -629,3 +631,18 @@ def setValLabel(lbl):
     lex, _tok = lbl
     tableOfLabel[lex] = len(postfixCode)
     return True
+
+
+def createLabel_end_loop():
+    global tableOfLabel
+    #nmb = len(tableOfLabel)+1
+    lexeme = f"LOOP_END"
+    val = tableOfLabel.get(lexeme)
+    if val is None:
+        tableOfLabel[lexeme] = 'val_undef'
+        tok = 'loop_end'
+    else:
+        tok = 'Конфлікт міток'
+        print(tok)
+        exit(1003)
+    return (lexeme, tok)

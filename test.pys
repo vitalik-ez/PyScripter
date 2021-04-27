@@ -1,3 +1,13 @@
-real x;
-x = 3.12e+7;
-x = x // 12.278;
+real a;
+a = 12;
+boolean b;
+b = true;
+if a != 102 then
+	a = a / 1000;
+	if b == true then
+		a = a * 999;
+		if a > 0 then
+			a = a + 1000000;
+		fi
+	fi
+fi 

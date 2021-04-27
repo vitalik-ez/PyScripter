@@ -50,7 +50,7 @@ Ferror={101, 102, 103, 104, 105}# обробка помилок
 tableOfId={}   # Таблиця ідентифікаторів
 tableOfConst={} # Таблиця констант
 tableOfSymb={}  # Таблиця символів програми (таблиця розбору)
-
+tableOfLabel={}  # Таблиця символів міток програми 
 
 state=initState # поточний стан
 
@@ -294,10 +294,13 @@ def tableToPrint(Tbl):
 		tableOfIdToPrint()
 	elif Tbl=="Const":
 		tableOfConstToPrint()
+	elif Tbl=="Label":
+		tableOfLabelToPrint()
 	else:
 		tableOfSymbToPrint()
 		tableOfIdToPrint()
 		tableOfConstToPrint()
+		tableOfLabelToPrint()
 	return True
 
 def tableOfSymbToPrint():
@@ -329,7 +332,16 @@ def tableOfConstToPrint():
 		print(s2.format(str(cnst),index,type,val))
 
 
-
+def tableOfLabelToPrint():
+	if len(tableOfLabel)==0: print("\n Таблиця міток - порожня")
+	else: 
+		s1 = '{0:<10s} {1:<10s} '
+		print("\n Таблиця міток")
+		print(s1.format("Label","Value"))
+		s2 = '{0:<10s} {1:<10s}'
+		for lbl in tableOfLabel: 
+			val = tableOfLabel[lbl]
+			print(s2.format(lbl,str(val)))
 # запуск лексичного аналізатора	
 # lex()
 # запуск лексичного аналізатора	

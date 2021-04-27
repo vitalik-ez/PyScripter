@@ -1,5 +1,5 @@
 from lexer import lex, tableToPrint
-from lexer import tableOfSymb, tableOfId, tableOfConst, sourceCode
+from lexer import tableOfSymb, tableOfId, tableOfConst, tableOfLabel, sourceCode
 from postfixExpr_translator_02 import postfixTranslator, postfixCode
 from stack01 import Stack
 
@@ -43,16 +43,46 @@ def check_name_variables():
                         list_used_names.append(a[i][1])
                 i += 1
 
+def processing_colon():
+    global postfixCode
+    a = postfixCode.pop(0)
+    print('processing_colon', a)
+
+def processing_JF(instrNum):
+    global postfixCode, stack, tableOfLabel
+    b = stack.pop()
+    if b == ('true', 'boolval'):
+        print('yes')
+        return instrNum+1
+    else:
+        number = postfixCode[instrNum-1][0][1]
+        #print('number', number)
+        return tableOfLabel[f'm{int(number)}']
+
+
+def doJumps(tok, instrNum):
+    if tok == 'jump':
+        next = processing_JUMP()
+    elif tok == 'colon':
+        #next = processing_colon(instrNum)
+        return instrNum+1
+    elif tok == 'jf':
+        next = processing_JF(instrNum)
+    return next
+
+
+
 announcement_variable = {}
 def postfixProcessing():
     global stack, postfixCode, announcement_variable, maxNumb
     maxNumb=len(postfixCode)
+    instrNum = 0
     check_name_variables()
     try:
-        for i in range(0,maxNumb):
-            lex,tok = postfixCode.pop(0)
-
+        while instrNum < maxNumb:
+            lex,tok = postfixCode[instrNum]
             # перевірка чи була об'явлена змінна ident
+            if lex in ('r1', 'r2'): announcement_variable[lex] = 'int'
             if tok == 'ident':
                 for numLine, value in tableOfSymb.items():
                     if lex == value[1] and value[-1] == tableOfId[lex][0]:
@@ -69,10 +99,14 @@ def postfixProcessing():
             ###
             if tok in ('int','real','ident', 'boolval'): # boolean !!!
                 stack.push((lex,tok))
+                nextNum = instrNum + 1
+            elif tok in ('jf', 'colon'):
+                nextNum = doJumps(tok, instrNum)
             else: 
                 doIt(lex,tok)
-
-            if toView: configToPrint(i+1, lex, tok, maxNumb)
+                nextNum = instrNum + 1
+            if toView: configToPrint(instrNum+1, lex, tok, maxNumb)
+            instrNum = nextNum
         #print(announcement_variable)
         return True
     except SystemExit as e:
@@ -84,7 +118,7 @@ def configToPrint(step,lex,tok,maxN):
     if step == 1:
         print('='*30+'\nInterpreter run\n')
         tableToPrint('All')
-
+    '''
     print('\nКрок інтерпретації: {0}'.format(step))
     if tok in ('int','real'):
         print('Лексема: {0} у таблиці констант: {1}'.format((lex,tok),lex + ':' +str(tableOfConst[lex])))
@@ -95,8 +129,9 @@ def configToPrint(step,lex,tok,maxN):
 
     print('postfixCode={0}'.format(postfixCode)) 
     stack.print()
+    '''
     if  step == maxN: 
-        for Tbl in ('Id','Const'): # 'Label'
+        for Tbl in ('Id','Const', 'Label'): # 'Label'
             tableToPrint(Tbl)
     return True
 

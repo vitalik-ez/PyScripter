@@ -1,5 +1,5 @@
-from lexer import lex
-from lexer import tableOfSymb, tableOfId, tableOfConst, sourceCode, tableToPrint, tableOfIdToPrint, tableOfConstToPrint
+from lexer import lex, indexIdConst
+from lexer import tableOfSymb, tableOfId, tableOfConst, sourceCode, tableToPrint, tableOfIdToPrint, tableOfConstToPrint, tableOfLabel
 import lexer
 
 lex()
@@ -164,6 +164,10 @@ def parseStatement(fiStatement, endStatement):
         elif (lex, tok) == ('for','keyword'):
             parseFor()
             return True 
+
+        elif tok == 'label':
+            parseLabel()
+            return True
 
         # тут - ознака того, що всі інструкції були коректно 
         # розібрані і була знайдена остання лексема програми.
@@ -360,6 +364,7 @@ def parseAssign(IndExpr=None):
                 if toView: configToPrint('=',current_row)
                 return True
         elif lex == 'to' or parseToken(';', 'punct', '\t\t\t\t'):
+
             postfixCode.append(('=', 'assign_op'))# Трансляція   
                                     # Бінарний оператор  '='
                                     # додається після своїх операндів
@@ -439,10 +444,6 @@ def parseFactor():
     unary = None
     if tok == 'add_op' and lex == '-':
         unary = (lex, 'NEG') if lex == '-' else (lex, 'PLS')# Трансляція мінус - або плюс + до змінної
-        #if lex == '-':
-        #    postfixCode.append((lex, 'NEG'))      
-        #else:
-        #    postfixCode.append((lex, 'PLS')) 
         numRow += 1
         values = getSymb()
         if values == 'endOfProgram':
@@ -492,9 +493,20 @@ def parseIf():
         numRow += 1
         parseBoolExpr()
         parseToken('then','keyword','\t'*4)
+
+        m1 = createLabel()
+        postfixCode.append(m1)
+        postfixCode.append(('JF', 'jf'))
+
+
         #print('parceDoBlock', '\t'*4)
         parseStatementList(fiStatement=True)
         parseToken('fi','keyword','\t'*4)
+
+        #m2 = createLabel()
+        postfixCode.append(m1)
+        setValLabel(m1)
+        postfixCode.append((':','colon'))
     else: return False
 
 def parseFor():
@@ -512,12 +524,63 @@ def parseFor():
     else: return False
 
 def parseIndExpr():
-    global numRow
+    global numRow, postfixCode, tableOfId
     numLine, lex, tok = getSymb()
-    if tok == 'ident':    
+    if tok == 'ident':   
         parseAssign(IndExpr=True)
+
+
+        indexIdConst(2, 'r1', 'ident')
+        postfixCode.append(('r1', 'ident'))
+        indexIdConst(11, '1', 'int')
+        postfixCode.append(('1', 'int'))
+        postfixCode.append(('=', 'assign_op'))
+        m1 = createLabel()
+        postfixCode.append(m1)
+        setValLabel(m1)
+        postfixCode.append((':','colon'))
+        # STEP
+        indexIdConst(2, 'r2', 'ident')
+        postfixCode.append(('r2', 'ident'))
+        indexIdConst(11, '1', 'int')
+        postfixCode.append(('1', 'int'))
+        postfixCode.append(('=', 'assign_op'))
+
+        postfixCode.append(('r1', 'ident'))
+        postfixCode.append(('0', 'int'))
+        postfixCode.append(('==', 'rel_op'))
+        
+        postfixCode.append(('JFor', 'jfor'))
+
+        postfixCode.append((lex, tok))
+        postfixCode.append((lex, tok))
+        postfixCode.append(('r2', 'ident'))
+        postfixCode.append(('+', 'add_op'))
+        postfixCode.append(('=', 'assign_op'))
+
+        m2 = createLabel()
+        postfixCode.append(m2)
+        setValLabel(m2)
+        postfixCode.append((':','colon'))
+
+        postfixCode.append(('r1', 'ident'))
+        indexIdConst(11, '0', 'int')
+        postfixCode.append(('0', 'int'))
+        postfixCode.append(('=', 'assign_op'))
+
         if parseToken('to','keyword','\t'*4):
+            # Умова
+            postfixCode.append((lex, tok))
             parseExpression()
+            postfixCode.append(('-', 'add_op'))
+            postfixCode.append(('0', 'int'))
+            postfixCode.append(('<', 'rel_op'))
+
+            postfixCode.append(('JFor_condition', 'jfor_condition'))
+            m3 = createLabel()
+            postfixCode.append(m3)
+            setValLabel(m3)
+            postfixCode.append((':','colon'))
             return True
         else:
             return False
@@ -539,7 +602,30 @@ def parseBoolExpr():
     else:
         failParse('невідповідність інструкцій',(numLine,lex,tok,'rel_op'))
     parseExpression()
+    postfixCode.append((lex, tok))
     return True    
 
 # запуск парсера
 #postfixTranslator()  
+
+
+def createLabel():
+    global tableOfLabel
+    nmb = len(tableOfLabel)+1
+    lexeme = f"m{nmb}"
+    val = tableOfLabel.get(lexeme)
+    if val is None:
+        tableOfLabel[lexeme] = 'val_undef'
+        tok = 'label'
+    else:
+        tok = 'Конфлікт міток'
+        print(tok)
+        exit(1003)
+    return (lexeme, tok)
+
+
+def setValLabel(lbl):
+    global tableOfLabel
+    lex, _tok = lbl
+    tableOfLabel[lex] = len(postfixCode)
+    return True

@@ -1,6 +1,6 @@
 from lexer import lex, tableToPrint
 from lexer import tableOfSymb, tableOfId, tableOfConst, tableOfLabel, sourceCode
-from postfixExpr_translator_02 import postfixTranslator, postfixCode
+from postfixExpr_translator_02 import postfixTranslator, postfixCode, tableOfLabel_FOR
 from stack01 import Stack
 
 stack = Stack()
@@ -73,11 +73,11 @@ def doForJumps(tok, instrNum):
     elif tok == 'jfor_condition':
         b = stack.pop()
         if b == ('false', 'boolval'):
-            return tableOfLabel['LOOP_END']+1
+            return tableOfLabel[f'LOOP_END1']+1
         else:
             return instrNum + 1
     elif tok == 'loop_end':
-        return tableOfLabel['m1']
+        return tableOfLabel['LOOP_START1']
 
 
 def input_output(tok):
@@ -122,7 +122,7 @@ announcement_variable = {}
 def postfixProcessing():
     global stack, postfixCode, announcement_variable, maxNumb
     maxNumb=len(postfixCode)
-    instrNum = 0
+    instrNum = number_loop = 0
     check_name_variables()
     try:
         while instrNum < maxNumb:

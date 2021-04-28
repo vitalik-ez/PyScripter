@@ -529,6 +529,7 @@ def parseFor():
         return True
     else: return False
 
+tableOfLabel_FOR = {}
 def parseIndExpr():
     global numRow, postfixCode, tableOfId
     numLine, lex, tok = getSymb()
@@ -541,9 +542,14 @@ def parseIndExpr():
         indexIdConst(11, '1', 'int')
         postfixCode.append(('1', 'int'))
         postfixCode.append(('=', 'assign_op'))
-        m1 = createLabel()
-        postfixCode.append(m1)
-        setValLabel(m1)
+        
+        #m1 = createLabel()
+        #postfixCode.append(m1)
+        #setValLabel(m1)
+
+        loop_start = createLabel_start_loop()
+        postfixCode.append(loop_start)
+        setValLabel(loop_start)
         postfixCode.append((':','colon'))
         # STEP
         indexIdConst(2, 'r2', 'ident')
@@ -636,16 +642,36 @@ def setValLabel(lbl):
     tableOfLabel[lex] = len(postfixCode)
     return True
 
-
-def createLabel_end_loop():
+def createLabel_start_loop():
     global tableOfLabel
-    #nmb = len(tableOfLabel)+1
-    lexeme = f"LOOP_END"
+    nmb = len(tableOfLabel_FOR)+1
+    lexeme = f"LOOP_START{nmb}"
     val = tableOfLabel.get(lexeme)
     if val is None:
         tableOfLabel[lexeme] = 'val_undef'
+        tableOfLabel_FOR[lexeme] = 'end_undef'
+        tok = 'loop_start'
+    else:
+        tok = 'Конфлікт міток'
+        print(tok)
+        exit(1003)
+    return (lexeme, tok)
+
+def createLabel_end_loop():
+    global tableOfLabel, tableOfLabel_FOR
+    for key,val in tableOfLabel_FOR.items():
+        if val == 'end_undef':
+            nmb = int(key[-1])
+            tableOfLabel_FOR[key] = f"LOOP_END{nmb}"
+
+    lexeme = f"LOOP_END{nmb}"
+    val = tableOfLabel.get(lexeme)
+    if val is None:
+        tableOfLabel[lexeme] = 'val_undef'
+        #tableOfLabel_FOR[f'LOOP_START{nmb-1}'] = lexeme
         tok = 'loop_end'
     else:
+        print('ERROR')
         tok = 'Конфлікт міток'
         print(tok)
         exit(1003)

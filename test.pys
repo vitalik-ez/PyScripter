@@ -1,6 +1,7 @@
-int a;
-real r;
-r = 5;
-for a = 0 to 5 do
-	r = r + 10;
+int a, z;
+z = 0;
+for a = 2 to 5 do
+	for b = 0 to 3 do 
+		z = z + 2;
+	end
 end 

@@ -63,7 +63,8 @@ def doJumps(tok, instrNum):
         next = processing_JF(instrNum)
     return next
 
-def doForJumps(tok, instrNum):
+def doForJumps(tok, instrNum, lex):
+    global number_loop
     if tok == 'jfor':
         b = stack.pop()
         if b == ('true', 'boolval'):
@@ -73,11 +74,13 @@ def doForJumps(tok, instrNum):
     elif tok == 'jfor_condition':
         b = stack.pop()
         if b == ('false', 'boolval'):
-            return tableOfLabel[f'LOOP_END1']+1
+            ret_val = tableOfLabel[f'LOOP_END{number_loop[-1]}']
+            number_loop.pop()
+            return ret_val
         else:
             return instrNum + 1
     elif tok == 'loop_end':
-        return tableOfLabel['LOOP_START1']
+        return tableOfLabel[f'LOOP_START{number_loop[-1]}'] + 1
 
 
 def input_output(tok):
@@ -117,16 +120,21 @@ def input_output(tok):
             failRunTime('введення не відповідного типу змінної', type_var)
         
 
-
+number_loop = []
 announcement_variable = {}
 def postfixProcessing():
-    global stack, postfixCode, announcement_variable, maxNumb
+    global stack, postfixCode, announcement_variable, maxNumb, number_loop
     maxNumb=len(postfixCode)
-    instrNum = number_loop = 0
+    instrNum = 0
     check_name_variables()
     try:
         while instrNum < maxNumb:
             lex,tok = postfixCode[instrNum]
+
+            if lex[:10] == 'LOOP_START':
+                number_loop.append(int(lex[10:]))
+
+
             # перевірка чи була об'явлена змінна ident
             if lex in ('r1', 'r2'): announcement_variable[lex] = 'int'
             if tok == 'ident':
@@ -149,7 +157,7 @@ def postfixProcessing():
             elif tok in ('jf', 'colon'):
                 nextNum = doJumps(tok, instrNum)
             elif tok in ('jfor', 'jfor_condition', 'loop_end'):
-                nextNum = doForJumps(tok, instrNum)
+                nextNum = doForJumps(tok, instrNum, lex)
             elif tok in ('out', 'input'):
                 input_output(tok)
                 nextNum = instrNum + 1

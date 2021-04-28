@@ -659,11 +659,11 @@ def createLabel_start_loop():
 
 def createLabel_end_loop():
     global tableOfLabel, tableOfLabel_FOR
-    for key,val in tableOfLabel_FOR.items():
+    for key,val in list(tableOfLabel_FOR.items())[::-1]:
         if val == 'end_undef':
             nmb = int(key[-1])
             tableOfLabel_FOR[key] = f"LOOP_END{nmb}"
-
+            break
     lexeme = f"LOOP_END{nmb}"
     val = tableOfLabel.get(lexeme)
     if val is None:

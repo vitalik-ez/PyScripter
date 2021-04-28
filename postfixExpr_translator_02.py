@@ -570,10 +570,10 @@ def parseIndExpr():
         postfixCode.append(('+', 'add_op'))
         postfixCode.append(('=', 'assign_op'))
 
-        m2 = createLabel()
-        postfixCode.append(m2)
-        setValLabel(m2)
-        postfixCode.append((':','colon'))
+        #m2 = createLabel()
+        #postfixCode.append(m2)
+        #setValLabel(m2)
+        #postfixCode.append((':','colon'))
 
         postfixCode.append(('r1', 'ident'))
         indexIdConst(11, '0', 'int')
@@ -589,10 +589,10 @@ def parseIndExpr():
             postfixCode.append(('<', 'rel_op'))
 
             postfixCode.append(('JFor_condition', 'jfor_condition'))
-            m3 = createLabel()
-            postfixCode.append(m3)
-            setValLabel(m3)
-            postfixCode.append((':','colon'))
+            #m3 = createLabel()
+            #postfixCode.append(m3)
+            #setValLabel(m3)
+            #postfixCode.append((':','colon'))
             return True
         else:
             return False

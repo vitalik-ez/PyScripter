@@ -49,8 +49,7 @@ def processing_JF(instrNum):
     if b == ('true', 'boolval'):
         return instrNum+1
     else:
-        number = postfixCode[instrNum-1][0][1]
-        #print('number', number)
+        number = postfixCode[instrNum-1][0][1:]
         return tableOfLabel[f'm{int(number)}']
 
 
@@ -358,7 +357,6 @@ def getValue(vtL,lex,vtR):
         value = valL / valR
         tokL = 'real'
     elif lex == '**':
-        print(valR, valL)
         value = valL ** valR
     elif lex == '//':
         value = valL // valR
